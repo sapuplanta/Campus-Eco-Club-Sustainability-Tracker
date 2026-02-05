@@ -10,7 +10,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["post"])) {
     if ($message === "") {
         $messageStatus = "Announcement message cannot be empty.";
     } else {
-        $sql = "INSERT INTO announcements (message) VALUES (?)";
+        $sql = "INSERT INTO announcement (message) VALUES (?)";
         $stmt = mysqli_prepare($conn, $sql);
         mysqli_stmt_bind_param($stmt, "s", $message);
 
