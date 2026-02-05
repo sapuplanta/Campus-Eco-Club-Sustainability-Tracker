@@ -16,7 +16,7 @@ if (isset($_GET["approve"]) || isset($_GET["reject"])) {
 
     $newStatus = ($action === "approve") ? "Approved" : "Rejected";
 
-    $sql = "UPDATE registrations SET status=? WHERE registrationID=?";
+    $sql = "UPDATE registration SET status=? WHERE registrationID=?";
     $stmt = mysqli_prepare($conn, $sql);
     mysqli_stmt_bind_param($stmt, "si", $newStatus, $id);
     mysqli_stmt_execute($stmt);
@@ -28,7 +28,7 @@ if (isset($_GET["approve"]) || isset($_GET["reject"])) {
 }
 
 // Load registrations
-$result = mysqli_query($conn, "SELECT * FROM registrations ORDER BY registrationID DESC");
+$result = mysqli_query($conn, "SELECT * FROM registration ORDER BY registrationID DESC");
 ?>
 <!doctype html>
 <html lang="en">
