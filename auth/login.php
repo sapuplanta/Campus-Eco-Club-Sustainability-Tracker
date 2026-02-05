@@ -7,12 +7,12 @@ $error = "";
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["login"])) {
     $email = trim($_POST["email"] ?? "");
     $password = $_POST["password"] ?? "";
-    $role = "event_organizer"; 
+    $role = "event_organizer";
 
     if ($email === "" || $password === "") {
         $error = "Please enter email and password.";
     } else {
-        $sql = "SELECT userID, email, password, role FROM users WHERE email=? AND role=? LIMIT 1";
+        $sql = "SELECT email, password FROM users WHERE email=? AND role=? LIMIT 1";
         $stmt = mysqli_prepare($conn, $sql);
         mysqli_stmt_bind_param($stmt, "ss", $email, $role);
         mysqli_stmt_execute($stmt);
@@ -20,51 +20,67 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["login"])) {
         $result = mysqli_stmt_get_result($stmt);
         $user = mysqli_fetch_assoc($result);
 
-        if (!$user) {
-            $error = "Invalid email/password or not an event organiser account.";
+        if (!$user || $password !== $user["password"]) {
+            // If you are using hashed passwords later, replace the line above with password_verify()
+            $error = "Invalid email or password.";
         } else {
-               
-             $ok = ($password === $user["password"]);
-
-            if (!$ok) {
-                $error = "Invalid email or password.";
-            } else {
-                $_SESSION["userID"] = $user["userID"];
-                $_SESSION["email"] = $user["email"];
-                $_SESSION["role"]  = $user["role"];
-
-                header("Location: ../event_organiser/dashboard.php");
-                exit;
-            }
+            $_SESSION["event_organiser"] = $user["email"];
+            header("Location: ../event_organiser/dashboard.php");
+            exit;
         }
 
         mysqli_stmt_close($stmt);
     }
 }
 ?>
-
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <title>Login | Event Organiser</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Event Organiser Login</title>
+
+  <!-- Same shared style -->
+  <link rel="stylesheet" href="../event_organiser/style.css">
+
+  <!-- Icons -->
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
-  <h2>Login (Event Organiser)</h2>
+
+<div class="container">
+
+  <div class="top-bar">
+    <h1>Event Organiser Login</h1>
+  </div>
 
   <?php if ($error !== ""): ?>
-    <p style="color:red;"><?php echo htmlspecialchars($error); ?></p>
+    <div class="msg error">
+      <?php echo htmlspecialchars($error); ?>
+    </div>
   <?php endif; ?>
 
-  <form method="POST" action="">
-    <label>Email</label><br>
-    <input type="email" name="email" required><br><br>
+  <form method="POST">
 
-    <label>Password</label><br>
-    <input type="password" name="password" required><br><br>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" name="email" placeholder="organiser@eco.com" required>
+    </div>
 
-    <button type="submit" name="login">Login</button>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" name="password" placeholder="••••••••" required>
+    </div>
+
+    <button class="btn btn-secondary" type="submit" name="login" style="width:100%;">
+      <i class="fa-solid fa-right-to-bracket"></i> Login
+    </button>
+
   </form>
+
+</div>
+
 </body>
 </html>
+    
