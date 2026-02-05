@@ -5,34 +5,44 @@ require_once __DIR__ . "/../config/db.php";
 $error = "";
 
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["login"])) {
+
     $email = trim($_POST["email"] ?? "");
-    $password = $_POST["password"] ?? "";
-    $role = "event_organizer";
+    $password = trim($_POST["password"] ?? "");
 
     if ($email === "" || $password === "") {
         $error = "Please enter email and password.";
     } else {
-        $sql = "SELECT email, password FROM users WHERE email=? AND role=? LIMIT 1";
+
+        // IMPORTANT: role must match DB exactly
+        $sql = "SELECT email, password FROM users 
+                WHERE email = ? AND role = 'event_organizer' 
+                LIMIT 1";
+
         $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "ss", $email, $role);
+        mysqli_stmt_bind_param($stmt, "s", $email);
         mysqli_stmt_execute($stmt);
 
         $result = mysqli_stmt_get_result($stmt);
         $user = mysqli_fetch_assoc($result);
 
+        mysqli_stmt_close($stmt);
+
+        // 🔑 PASSWORD CHECK
+        // You are using PLAIN TEXT passwords
         if (!$user || $password !== $user["password"]) {
-            // If you are using hashed passwords later, replace the line above with password_verify()
             $error = "Invalid email or password.";
         } else {
+            // ✅ THIS SESSION KEY IS WHAT YOUR DASHBOARD EXPECTS
             $_SESSION["event_organiser"] = $user["email"];
+
+            // DEBUG SAFETY: ensure redirect works
             header("Location: ../event_organiser/dashboard.php");
             exit;
         }
-
-        mysqli_stmt_close($stmt);
     }
 }
 ?>
+
 <!doctype html>
 <html lang="en">
 <head>
