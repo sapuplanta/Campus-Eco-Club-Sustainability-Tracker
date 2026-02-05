@@ -6,20 +6,29 @@ $message = "";
 $isError = false;
 
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["submit"])) {
-    $title = trim($_POST["title"]);
-    $date = $_POST["date"];
-    $location = trim($_POST["location"]);
+    $name = trim($_POST["name"] ?? "");
+    $date = $_POST["date"] ?? "";
+    $location = trim($_POST["location"] ?? "");
+    $description = trim($_POST["description"] ?? "");
 
-    if ($title === "" || $date === "" || $location === "") {
-        $message = "All fields are required.";
+    if ($name === "" || $date === "" || $location === "") {
+        $message = "Name, Date and Location are required.";
         $isError = true;
     } else {
-        $sql = "INSERT INTO event (title, date, location) VALUES (?, ?, ?)";
-        $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "sss", $title, $date, $location);
+        $eventID = uniqid("EV");     // generates EVxxxx unique id
+        $status  = "Active";
 
-        if (mysqli_stmt_execute($stmt)) $message = "Event created successfully.";
-        else { $message = "Error creating event."; $isError = true; }
+        $sql = "INSERT INTO event (eventID, name, date, location, description, status)
+                VALUES (?, ?, ?, ?, ?, ?)";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "ssssss", $eventID, $name, $date, $location, $description, $status);
+
+        if (mysqli_stmt_execute($stmt)) {
+            $message = "Event created successfully. Event ID: $eventID";
+        } else {
+            $message = "Error creating event: " . mysqli_error($conn);
+            $isError = true;
+        }
 
         mysqli_stmt_close($stmt);
     }
@@ -54,8 +63,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["submit"])) {
 
   <form method="POST">
     <div class="form-group">
-      <label>Title</label>
-      <input type="text" name="title" required>
+      <label>Event Name</label>
+      <input type="text" name="name" required>
     </div>
 
     <div class="form-group">
@@ -68,8 +77,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["submit"])) {
       <input type="text" name="location" required>
     </div>
 
+    <div class="form-group">
+      <label>Description (optional)</label>
+      <textarea name="description" placeholder="Enter description..."></textarea>
+    </div>
+
     <button class="btn btn-secondary" type="submit" name="submit">
-      <i class="fa-solid fa-check"></i> Create Event
+      <i class="fa-solid fa-calendar-plus"></i> Create Event
     </button>
   </form>
 
