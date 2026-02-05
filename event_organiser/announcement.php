@@ -2,23 +2,19 @@
 require_once __DIR__ . "/auth_guard.php";
 require_once __DIR__ . "/../config/db.php";
 
-$messageStatus = "";
+$status = "";
+$isError = false;
 
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["post"])) {
-    $message = trim($_POST["message"]);
-
-    if ($message === "") {
-        $messageStatus = "Announcement message cannot be empty.";
-    } else {
+    $msg = trim($_POST["message"]);
+    if ($msg === "") { $status = "Announcement cannot be empty."; $isError = true; }
+    else {
         $sql = "INSERT INTO announcement (message) VALUES (?)";
         $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "s", $message);
+        mysqli_stmt_bind_param($stmt, "s", $msg);
 
-        if (mysqli_stmt_execute($stmt)) {
-            $messageStatus = "Announcement posted successfully.";
-        } else {
-            $messageStatus = "Error posting announcement.";
-        }
+        if (mysqli_stmt_execute($stmt)) $status = "Announcement posted successfully.";
+        else { $status = "Error posting announcement."; $isError = true; }
 
         mysqli_stmt_close($stmt);
     }
@@ -29,25 +25,39 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["post"])) {
 <head>
   <meta charset="utf-8">
   <title>Post Announcement</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
+<div class="container">
 
-<p>
-  Logged in as <?php echo htmlspecialchars($_SESSION['event_organiser']); ?>
-  | <a href="../auth/logout.php">Logout</a>
-  | <a href="dashboard.php">Back to Dashboard</a>
-</p>
+  <div class="top-bar">
+    <h1>Post Announcement</h1>
+    <div class="nav-actions">
+      <a class="btn btn-secondary" href="dashboard.php"><i class="fa-solid fa-house"></i> Dashboard</a>
+      <a class="btn btn-danger" href="../auth/logout.php"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+    </div>
+  </div>
 
-<h3>Post Announcement</h3>
+  <?php if ($status !== ""): ?>
+    <div class="msg <?php echo $isError ? 'error' : ''; ?>">
+      <?php echo htmlspecialchars($status); ?>
+    </div>
+  <?php endif; ?>
 
-<?php if ($messageStatus !== ""): ?>
-  <p style="color:green;"><?php echo htmlspecialchars($messageStatus); ?></p>
-<?php endif; ?>
+  <form method="POST">
+    <div class="form-group">
+      <label>Announcement</label>
+      <textarea name="message" placeholder="Enter announcement here..." required></textarea>
+    </div>
 
-<form method="POST">
-    <textarea name="message" rows="5" cols="50" placeholder="Enter announcement here..." required></textarea><br><br>
-    <button type="submit" name="post">Post Announcement</button>
-</form>
+    <button class="btn btn-secondary" type="submit" name="post">
+      <i class="fa-solid fa-paper-plane"></i> Post
+    </button>
+  </form>
 
+</div>
 </body>
 </html>
