@@ -15,7 +15,8 @@ if (isset($_GET['reject'])) {
 $result = mysqli_query($conn, "SELECT * FROM registrations");
 ?>
 
-<h3>Manage Event Registrations</h3r
+<h3>Manage Event Registrations</h3>
+<?php while ($row = mysqli_fetch_assoc($result)) { ?>
  <p>
     Registration ID: <?= $row['registrationID']; ?><br>
     Status: <?= $row['status']; ?><br>
