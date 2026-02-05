@@ -2,26 +2,26 @@
 require_once __DIR__ . "/auth_guard.php";
 require_once __DIR__ . "/../config/db.php";
 
-$statusMsg = "";
+$status = "";
+$isError = false;
 
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["assign"])) {
     $volunteerID = trim($_POST["volunteer"]);
     $taskName = trim($_POST["task"]);
 
     if ($volunteerID === "" || $taskName === "") {
-        $statusMsg = "All fields are required.";
+        $status = "All fields are required.";
+        $isError = true;
     } elseif (!ctype_digit($volunteerID)) {
-        $statusMsg = "Volunteer ID must be a number.";
+        $status = "Volunteer ID must be a number.";
+        $isError = true;
     } else {
         $sql = "INSERT INTO task (task_name, volunteerID) VALUES (?, ?)";
         $stmt = mysqli_prepare($conn, $sql);
         mysqli_stmt_bind_param($stmt, "si", $taskName, $volunteerID);
 
-        if (mysqli_stmt_execute($stmt)) {
-            $statusMsg = "Task assigned successfully.";
-        } else {
-            $statusMsg = "Error assigning task.";
-        }
+        if (mysqli_stmt_execute($stmt)) $status = "Task assigned successfully.";
+        else { $status = "Error assigning task."; $isError = true; }
 
         mysqli_stmt_close($stmt);
     }
@@ -32,30 +32,44 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["assign"])) {
 <head>
   <meta charset="utf-8">
   <title>Assign Task</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
+<div class="container">
 
-<p>
-  Logged in as <?php echo htmlspecialchars($_SESSION['event_organiser']); ?>
-  | <a href="../auth/logout.php">Logout</a>
-  | <a href="dashboard.php">Back to Dashboard</a>
-</p>
+  <div class="top-bar">
+    <h1>Assign Task</h1>
+    <div class="nav-actions">
+      <a class="btn btn-secondary" href="dashboard.php"><i class="fa-solid fa-house"></i> Dashboard</a>
+      <a class="btn btn-danger" href="../auth/logout.php"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+    </div>
+  </div>
 
-<h3>Assign Task to Volunteer</h3>
+  <?php if ($status !== ""): ?>
+    <div class="msg <?php echo $isError ? 'error' : ''; ?>">
+      <?php echo htmlspecialchars($status); ?>
+    </div>
+  <?php endif; ?>
 
-<?php if ($statusMsg !== ""): ?>
-  <p style="color:green;"><?php echo htmlspecialchars($statusMsg); ?></p>
-<?php endif; ?>
+  <form method="POST">
+    <div class="form-group">
+      <label>Volunteer ID</label>
+      <input type="text" name="volunteer" required>
+    </div>
 
-<form method="POST">
-    <label>Volunteer ID</label><br>
-    <input type="text" name="volunteer" required><br><br>
+    <div class="form-group">
+      <label>Task Name</label>
+      <input type="text" name="task" required>
+    </div>
 
-    <label>Task Name</label><br>
-    <input type="text" name="task" required><br><br>
+    <button class="btn btn-secondary" type="submit" name="assign">
+      <i class="fa-solid fa-user-check"></i> Assign
+    </button>
+  </form>
 
-    <button type="submit" name="assign">Assign Task</button>
-</form>
-
+</div>
 </body>
 </html>
