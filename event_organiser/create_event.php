@@ -12,7 +12,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["submit"])) {
     if ($title === "" || $date === "" || $location === "") {
         $message = "All fields are required.";
     } else {
-        $sql = "INSERT INTO events (title, date, location) VALUES (?, ?, ?)";
+        $sql = "INSERT INTO event (title, date, location) VALUES (?, ?, ?)";
         $stmt = mysqli_prepare($conn, $sql);
         mysqli_stmt_bind_param($stmt, "sss", $title, $date, $location);
 
