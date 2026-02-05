@@ -13,7 +13,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["assign"])) {
     } elseif (!ctype_digit($volunteerID)) {
         $statusMsg = "Volunteer ID must be a number.";
     } else {
-        $sql = "INSERT INTO tasks (task_name, volunteerID) VALUES (?, ?)";
+        $sql = "INSERT INTO task (task_name, volunteerID) VALUES (?, ?)";
         $stmt = mysqli_prepare($conn, $sql);
         mysqli_stmt_bind_param($stmt, "si", $taskName, $volunteerID);
 
