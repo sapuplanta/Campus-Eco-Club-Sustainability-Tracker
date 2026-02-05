@@ -2,6 +2,12 @@
 session_start();
 require_once __DIR__ . "/../config/db.php";
 
+// If already logged in, go to dashboard
+if (isset($_SESSION["event_organiser"]) && !empty($_SESSION["event_organiser"])) {
+    header("Location: ../event_organiser/dashboard.php");
+    exit;
+}
+
 $error = "";
 
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["login"])) {
@@ -14,35 +20,36 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["login"])) {
     } else {
 
         // IMPORTANT: role must match DB exactly
-        $sql = "SELECT email, password FROM users 
-                WHERE email = ? AND role = 'event_organizer' 
-                LIMIT 1";
+        $role = "event_organizer";
 
+        $sql = "SELECT email, password, role FROM users WHERE email=? AND role=? LIMIT 1";
         $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "s", $email);
-        mysqli_stmt_execute($stmt);
 
-        $result = mysqli_stmt_get_result($stmt);
-        $user = mysqli_fetch_assoc($result);
-
-        mysqli_stmt_close($stmt);
-
-        // 🔑 PASSWORD CHECK
-        // You are using PLAIN TEXT passwords
-        if (!$user || $password !== $user["password"]) {
-            $error = "Invalid email or password.";
+        if (!$stmt) {
+            $error = "SQL error: " . mysqli_error($conn);
         } else {
-            // ✅ THIS SESSION KEY IS WHAT YOUR DASHBOARD EXPECTS
-            $_SESSION["event_organiser"] = $user["email"];
+            mysqli_stmt_bind_param($stmt, "ss", $email, $role);
+            mysqli_stmt_execute($stmt);
 
-            // DEBUG SAFETY: ensure redirect works
-            header("Location: ../event_organiser/dashboard.php");
-            exit;
+            $result = mysqli_stmt_get_result($stmt);
+            $user = mysqli_fetch_assoc($result);
+
+            mysqli_stmt_close($stmt);
+
+            // ✅ Plain text password check (your current DB setup)
+            if (!$user || $password !== $user["password"]) {
+                $error = "Invalid email or password.";
+            } else {
+                // ✅ This is what auth_guard.php expects
+                $_SESSION["event_organiser"] = $user["email"];
+
+                header("Location: ../event_organiser/dashboard.php");
+                exit;
+            }
         }
     }
 }
 ?>
-
 <!doctype html>
 <html lang="en">
 <head>
@@ -50,7 +57,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["login"])) {
   <title>Login | Event Organiser</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <!-- Same shared style -->
+  <!-- Same style as organiser pages -->
   <link rel="stylesheet" href="../event_organiser/style.css">
 
   <!-- Icons -->
@@ -66,13 +73,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["login"])) {
   </div>
 
   <?php if ($error !== ""): ?>
-    <div class="msg error">
-      <?php echo htmlspecialchars($error); ?>
-    </div>
+    <div class="msg error"><?php echo htmlspecialchars($error); ?></div>
   <?php endif; ?>
 
-  <form method="POST">
-
+  <form method="POST" action="">
     <div class="form-group">
       <label>Email</label>
       <input type="email" name="email" placeholder="organiser@eco.com" required>
@@ -86,11 +90,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["login"])) {
     <button class="btn btn-secondary" type="submit" name="login" style="width:100%;">
       <i class="fa-solid fa-right-to-bracket"></i> Login
     </button>
-
   </form>
 
 </div>
 
 </body>
 </html>
-    
