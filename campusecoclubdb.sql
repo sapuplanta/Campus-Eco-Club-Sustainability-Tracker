@@ -1,5 +1,3 @@
-CREATE DATABASE campusecoclub;
-
 CREATE TABLE Users (
 	UserID int,
     UserName varchar(100),
