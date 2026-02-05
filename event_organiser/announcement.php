@@ -12,14 +12,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["post"])) {
         $statusMsg = "Announcement message cannot be empty.";
         $isError = true;
     } else {
-        $announcementID = uniqid("AN");   // UNIQUE PRIMARY KEY
-        $status = "Active";
+        $announcementID = uniqid("AN"); // unique primary key
 
-        $sql = "INSERT INTO announcement (announcementID, message, status)
-                VALUES (?, ?, ?)";
+        $sql = "INSERT INTO announcement (announcementID, message)
+                VALUES (?, ?)";
 
         $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "sss", $announcementID, $message, $status);
+        mysqli_stmt_bind_param($stmt, "ss", $announcementID, $message);
 
         if (mysqli_stmt_execute($stmt)) {
             $statusMsg = "Announcement posted successfully. ID: $announcementID";
