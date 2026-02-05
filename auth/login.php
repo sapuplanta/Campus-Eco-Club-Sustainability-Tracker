@@ -23,11 +23,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["login"])) {
         if (!$user) {
             $error = "Invalid email/password or not an event organiser account.";
         } else {
-            // If hashed passwords:
-            $ok = password_verify($password, $user["password"]);
-
-            // If plain text passwords (temporary):
-            // $ok = ($password === $user["password"]);
+               
+             $ok = ($password === $user["password"]);
 
             if (!$ok) {
                 $error = "Invalid email or password.";
