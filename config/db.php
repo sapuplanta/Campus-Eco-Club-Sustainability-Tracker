@@ -1,5 +1,5 @@
 <?php
-$conn = mysqli_connect("localhost", "root", "", "eco_tracker");
+$conn = mysqli_connect("localhost", "root", "", "campusecoclub");
 
 if (!$conn) {
     die("Connection failed: " . mysqli_connect_error());
