@@ -2,32 +2,22 @@
 require_once __DIR__ . "/auth_guard.php";
 require_once __DIR__ . "/../config/db.php";
 
-// Handle approve/reject actions safely
 if (isset($_GET["approve"]) || isset($_GET["reject"])) {
-
     $action = isset($_GET["approve"]) ? "approve" : "reject";
     $id = ($action === "approve") ? $_GET["approve"] : $_GET["reject"];
 
-    // validate id as integer
-    if (filter_var($id, FILTER_VALIDATE_INT) === false) {
-        header("Location: manage_registration.php");
-        exit;
+    if (filter_var($id, FILTER_VALIDATE_INT) !== false) {
+        $newStatus = ($action === "approve") ? "Approved" : "Rejected";
+        $sql = "UPDATE registration SET status=? WHERE registrationID=?";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "si", $newStatus, $id);
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
     }
-
-    $newStatus = ($action === "approve") ? "Approved" : "Rejected";
-
-    $sql = "UPDATE registration SET status=? WHERE registrationID=?";
-    $stmt = mysqli_prepare($conn, $sql);
-    mysqli_stmt_bind_param($stmt, "si", $newStatus, $id);
-    mysqli_stmt_execute($stmt);
-    mysqli_stmt_close($stmt);
-
-    // redirect to avoid resubmitting action on refresh
     header("Location: manage_registration.php");
     exit;
 }
 
-// Load registrations
 $result = mysqli_query($conn, "SELECT * FROM registration ORDER BY registrationID DESC");
 ?>
 <!doctype html>
@@ -35,37 +25,47 @@ $result = mysqli_query($conn, "SELECT * FROM registration ORDER BY registrationI
 <head>
   <meta charset="utf-8">
   <title>Manage Registrations</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
+<div class="container">
 
-<p>
-  Logged in as <?php echo htmlspecialchars($_SESSION['event_organiser']); ?>
-  | <a href="../auth/logout.php">Logout</a>
-  | <a href="dashboard.php">Back to Dashboard</a>
-</p>
+  <div class="top-bar">
+    <h1>Manage Registrations</h1>
+    <div class="nav-actions">
+      <a class="btn btn-secondary" href="dashboard.php"><i class="fa-solid fa-house"></i> Dashboard</a>
+      <a class="btn btn-danger" href="../auth/logout.php"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+    </div>
+  </div>
 
-<h3>Manage Event Registrations</h3>
+  <?php if (!$result): ?>
+    <div class="msg error">Error loading registrations.</div>
+  <?php elseif (mysqli_num_rows($result) === 0): ?>
+    <div class="msg">No registrations found.</div>
+  <?php else: ?>
 
-<?php if (!$result): ?>
-  <p style="color:red;">Error loading registrations.</p>
-<?php else: ?>
+    <?php while ($row = mysqli_fetch_assoc($result)) { ?>
+      <div style="border:1px solid #eee; padding:14px; border-radius:12px; margin-bottom:12px;">
+        <div><b>Registration ID:</b> <?php echo htmlspecialchars($row["registrationID"]); ?></div>
+        <div><b>Status:</b> <?php echo htmlspecialchars($row["status"]); ?></div>
 
-  <?php if (mysqli_num_rows($result) === 0): ?>
-    <p>No registrations found.</p>
+        <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
+          <a class="btn btn-secondary" href="?approve=<?php echo urlencode($row["registrationID"]); ?>">
+            <i class="fa-solid fa-circle-check"></i> Approve
+          </a>
+
+          <a class="btn btn-danger" href="?reject=<?php echo urlencode($row["registrationID"]); ?>">
+            <i class="fa-solid fa-circle-xmark"></i> Reject
+          </a>
+        </div>
+      </div>
+    <?php } ?>
+
   <?php endif; ?>
 
-  <?php while ($row = mysqli_fetch_assoc($result)) { ?>
-    <div style="border:1px solid #ddd; padding:10px; margin:10px 0; border-radius:8px;">
-      <p><b>Registration ID:</b> <?php echo htmlspecialchars($row['registrationID']); ?></p>
-      <p><b>Status:</b> <?php echo htmlspecialchars($row['status']); ?></p>
-
-      <a href="?approve=<?php echo urlencode($row['registrationID']); ?>">Approve</a>
-      |
-      <a href="?reject=<?php echo urlencode($row['registrationID']); ?>">Reject</a>
-    </div>
-  <?php } ?>
-
-<?php endif; ?>
-
+</div>
 </body>
 </html>
