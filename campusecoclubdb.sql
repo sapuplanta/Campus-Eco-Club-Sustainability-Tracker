@@ -23,13 +23,16 @@ CREATE TABLE Event (
 );
 
 CREATE TABLE RecyclingLog (
-	LogID varchar(20),
-	LogType varchar(50),
-    weight decimal(3,2),
-    LogStatus varchar(20),
+    LogID VARCHAR(20),
+    LogType VARCHAR(50),
+    weight DECIMAL(5,2),
+    LogStatus VARCHAR(20),
+    UserID VARCHAR(20),
+
     PRIMARY KEY (LogID),
     FOREIGN KEY (UserID) REFERENCES Users(UserID)
 );
+
 
 CREATE TABLE Task (
 	TaskID varchar(20),
